@@ -7,6 +7,7 @@ import {Agent, IncomingMessage} from 'http';
 import url from 'url';
 const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGINS : ['http://localhost:3000'];
 
+
 const server = http2.createSecureServer({
   key: fs.readFileSync('./cert/host.key'),
   cert: fs.readFileSync('./cert/host.cert'),
@@ -23,7 +24,7 @@ const wss = new Websocket.Server({server});
 wss.on('connection', registerEventHandlers);
 
 server.on('upgrade', (req : IncomingMessage, socket : Agent) => {
-  const {key} = url.parse(req.url || '', true).query;
+  const key = new url.URL('http://www.somehost.com' + req.url || '').searchParams.get('key');
   const {origin} = req.headers;
 
   if (!origin || !key) {

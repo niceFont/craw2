@@ -1,5 +1,10 @@
 import Websocket from 'ws';
 import {checkAuthentication, createAuthToken} from './utils';
+import {uniqueNamesGenerator, adjectives, colors, names, animals} from 'unique-names-generator';
+import redisFactory from './redis';
+import config from 'config';
+
+const redisConn = redisFactory(config.get('redis'));
 
 interface Message {
   type: string,
@@ -13,11 +18,17 @@ const onMessageHandler = async function(data : string, socket : Websocket) {
   const event : Message = JSON.parse(data);
 
   if (event.type === 'authenticate') {
-    const token = await createAuthToken('test');
+    const username = uniqueNamesGenerator({
+      dictionaries: [adjectives, colors, animals, names],
+      separator: '-',
+    });
+    const token = await createAuthToken(username);
+    await redisConn.set(token, username);
     socket.send(JSON.stringify({
       type: 'authenticated',
       payload: {
         token,
+        username,
       },
     }));
     return;
