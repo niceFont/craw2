@@ -1,6 +1,6 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {LocalUser} from './types';
-import {debounce} from 'debounce';
+// import {debounce} from 'debounce';
 
 
 interface BoardProps {
@@ -11,38 +11,29 @@ interface BoardProps {
 const Board = ({localUser} : BoardProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   // const [users, updateUsers] = useState<Users>();
-  const [isDrawing, _toggleIsDrawing] = useState<boolean>(false);
-  const isDrawingRef = useRef<boolean>(isDrawing);
-  const shouldConnectRef = useRef<boolean>();
+  const isDrawingRef = useRef<boolean>(false);
+  const shouldConnectRef = useRef<boolean>(false);
   const x = useRef<number>(0);
   const y = useRef<number>(0);
-  const toggleIsDrawing = (value : boolean) => {
-    _toggleIsDrawing(value);
-    isDrawingRef.current = value;
-  };
-  const draw = () => {
+  const draw = (x : number, y : number, shouldConnect : boolean) => {
     const context = canvasRef.current?.getContext('2d');
-    debounce(() => {
-      if (context) {
-        context.lineJoin = 'round';
-        context.lineWidth = localUser.thickness;
-        context.lineCap = 'round';
-        context.strokeStyle = localUser.color;
-        context.beginPath();
-        console.log('drawing', shouldConnectRef.current, localUser.lastX, x);
-        if (shouldConnectRef.current) {
-          console.log('connecting');
-          context.moveTo(localUser.lastX, localUser.lastY);
-        } else {
-          console.log('notconnecting');
-          context.moveTo(x.current - 1, y.current -1);
-        }
-        context.lineTo(x.current, y.current);
-        context.stroke();
-        localUser.lastX = x.current;
-        localUser.lastY = y.current;
+
+    if (context) {
+      context.lineJoin = 'round';
+      context.lineWidth = localUser.thickness;
+      context.lineCap = 'round';
+      context.strokeStyle = localUser.color;
+      context.beginPath();
+      if (shouldConnect) {
+        context.moveTo(localUser.lastX, localUser.lastY);
+      } else {
+        context.moveTo(x - 1, y -1);
       }
-    }, 500, true)();
+      context.lineTo(x, y);
+      context.stroke();
+      localUser.lastX = x;
+      localUser.lastY = y;
+    }
   };
 
   useEffect(() => {
@@ -51,28 +42,27 @@ const Board = ({localUser} : BoardProps) => {
         x.current = (event.clientX - (canvasRef.current?.offsetLeft || 0));
         y.current = (event.clientY - (canvasRef.current?.offsetTop || 0));
         if (isDrawingRef.current) {
-          console.log('drawing from move');
-          draw();
+          draw(x.current, y.current, shouldConnectRef.current);
+          shouldConnectRef.current = true;
         }
       });
       canvasRef.current.addEventListener('mousedown', (event : MouseEvent) => {
-        console.log('down', isDrawingRef.current);
-        toggleIsDrawing(true);
+        isDrawingRef.current = true;
+        draw(x.current, y.current, shouldConnectRef.current);
+        shouldConnectRef.current = true;
       });
       canvasRef.current.addEventListener('mouseup', (event : MouseEvent) => {
-        console.log('stopped', isDrawingRef.current);
-        toggleIsDrawing(false);
+        isDrawingRef.current = false;
         shouldConnectRef.current = false;
       });
       canvasRef.current.addEventListener('mouseleave', (event : MouseEvent) => {
-        console.log('leave', isDrawingRef.current);
-        toggleIsDrawing(false);
+        isDrawingRef.current = false;
         shouldConnectRef.current = false;
       });
     }
   }, [canvasRef]);
 
-  useEffect(() => {
+  /*  useEffect(() => {
     console.log('useEffect', isDrawing);
     if (isDrawingRef.current) {
       setTimeout(() => {
@@ -81,7 +71,7 @@ const Board = ({localUser} : BoardProps) => {
         }
       }, 150);
     }
-  }, [isDrawingRef.current]);
+  }, [isDrawingRef.current]); */
   return (
     <canvas
       className="canvas"
