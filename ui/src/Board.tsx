@@ -62,16 +62,6 @@ const Board = ({localUser} : BoardProps) => {
     }
   }, [canvasRef]);
 
-  /*  useEffect(() => {
-    console.log('useEffect', isDrawing);
-    if (isDrawingRef.current) {
-      setTimeout(() => {
-        if (isDrawingRef.current) {
-          shouldConnectRef.current = true;
-        }
-      }, 150);
-    }
-  }, [isDrawingRef.current]); */
   return (
     <canvas
       className="canvas"

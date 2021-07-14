@@ -17,6 +17,7 @@ function App() {
     ws.addEventListener('message', (message) => {
       const {payload} = JSON.parse(message.data);
       setLocalUser({
+        _id: payload._id,
         username: payload.username,
         token: payload.token,
         lastX: 0,

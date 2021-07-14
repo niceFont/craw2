@@ -2,6 +2,7 @@ import Websocket from 'ws';
 import {checkAuthentication, createAuthToken} from './utils';
 import {uniqueNamesGenerator, adjectives, colors, names, animals} from 'unique-names-generator';
 import redisFactory from './redis';
+import {v4 as uuid} from 'uuid';
 import config from 'config';
 
 const redisConn = redisFactory(config.get('redis'));
@@ -27,6 +28,7 @@ const onMessageHandler = async function(data : string, socket : Websocket) {
     socket.send(JSON.stringify({
       type: 'authenticated',
       payload: {
+        _id: uuid(),
         token,
         username,
       },
