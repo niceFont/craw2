@@ -22,7 +22,7 @@ function App() {
         token: payload.token,
         lastX: 0,
         lastY: 0,
-        thickness: 10,
+        thickness: 5,
         color: '#000000',
       } as LocalUser);
     });
