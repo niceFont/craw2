@@ -1,23 +1,14 @@
 require('dotenv').config();
 import Websocket from 'ws';
-import http2 from 'http2';
-import fs from 'fs';
 import registerEventHandlers from './handlers';
-import config from 'config';
-import {Agent, IncomingMessage} from 'http';
+import {Agent, IncomingMessage, ServerResponse, createServer} from 'http';
 import url from 'url';
 const ALLOWED_ORIGINS = process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGINS : ['http://localhost:3000'];
-const passphrase : string = config.get('http.passphrase');
 
 
-const server = http2.createSecureServer({
-  key: fs.readFileSync('./cert/key.pem'),
-  cert: fs.readFileSync('./cert/cert.pem'),
-  passphrase,
-  allowHTTP1: true,
-}, (_req : http2.Http2ServerRequest, res : http2.Http2ServerResponse) => {
-  res.stream.respond({':status': 200});
-  res.stream.end('healthy');
+const server = createServer((_req : IncomingMessage, res : ServerResponse) => {
+  res.writeHead(200);
+  res.end('healthy');
 }).listen(8000);
 
 // @ts-ignore
@@ -27,6 +18,7 @@ const wss = new Websocket.Server({server});
 wss.on('connection', registerEventHandlers);
 
 server.on('upgrade', (req : IncomingMessage, socket : Agent) => {
+  console.log('hey');
   const key = new url.URL('http://www.somehost.com' + req.url || '').searchParams.get('key');
   const {origin} = req.headers;
   if (!origin || !key) {

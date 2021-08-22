@@ -41,9 +41,17 @@ const onMessageHandler = async function(data : string, socket : Websocket) {
     socket.terminate();
     return;
   }
-  switch (event.type) {
-    default:
-      break;
+  try {
+    switch (event.type) {
+      case 'drawing':
+        console.log(event.payload);
+        await redisConn.publish('drawing', JSON.stringify(event.payload));
+        break;
+      default:
+        break;
+    }
+  } catch (error) {
+    console.log(error);
   }
 };
 

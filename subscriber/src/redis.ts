@@ -9,6 +9,7 @@ function redisFactory(options : redis.ClientOpts) {
   return {
     get: promisify(client.get).bind(client),
     set: promisify(client.set).bind(client),
+    subscribe: promisify(client.subscribe),
   };
 }
 

@@ -1,7 +1,8 @@
 /* eslint-disable max-len */
 import React, {useEffect, useRef} from 'react';
+import {useRecoilValue} from 'recoil';
+import {connectedSocket, user, User} from './store/atoms';
 import {LocalUser} from './types';
-// import {debounce} from 'debounce';
 
 
 interface BoardProps {
@@ -13,9 +14,16 @@ interface Point {
   y : number,
   isConnected: boolean
 }
-
-
+const sendMessage = (socket: WebSocket, user : User, messageBody : object) => {
+  socket.send(JSON.stringify({
+    ...messageBody,
+    ...user,
+    authToken: user.token,
+  }));
+};
 const Board = ({localUser} : BoardProps) => {
+  const socket = useRecoilValue(connectedSocket);
+  const localUserInfo = useRecoilValue(user);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef<boolean>(false);
   const points = useRef<Array<Point>>([]);
@@ -38,7 +46,6 @@ const Board = ({localUser} : BoardProps) => {
         context.stroke();
         localUser.lastX = points.current[progress].x;
         localUser.lastY = points.current[progress].y;
-        console.log(localProgress, progress);
         localProgress.current = progress;
       }
     }
@@ -53,6 +60,12 @@ const Board = ({localUser} : BoardProps) => {
     if (isDrawingRef.current) {
       points.current = [...points.current, coordinate];
       draw();
+      if (socket && localUserInfo) {
+        sendMessage(socket, localUserInfo, {
+          payload: coordinate,
+          type: 'drawing',
+        });
+      }
     }
   };
 
