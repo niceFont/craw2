@@ -20,5 +20,8 @@ module.exports = {
     '@typescript-eslint',
   ],
   'rules': {
+    'max-len': 'off',
+    'require-jsdoc': 'off',
+    'no-unused-vars': 'off',
   },
 };

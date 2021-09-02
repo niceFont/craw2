@@ -1,4 +1,4 @@
-import {object, string} from 'superstruct';
+import {boolean, object, string} from 'superstruct';
 
 
 export default {
@@ -10,5 +10,6 @@ export default {
   login: object({
     username: string(),
     password: string(),
+    remember: boolean(),
   }),
 };

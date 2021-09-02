@@ -45,7 +45,7 @@ const onMessageHandler = async function(data : string, socket : Websocket) {
     switch (event.type) {
       case 'drawing':
         console.log(event.payload);
-        await redisConn.publish('drawing', JSON.stringify(event.payload));
+        // await redisConn.publish('drawing', JSON.stringify(event.payload));
         break;
       default:
         break;

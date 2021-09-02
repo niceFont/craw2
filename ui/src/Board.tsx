@@ -1,117 +1,59 @@
-/* eslint-disable max-len */
-import React, {useEffect, useRef} from 'react';
-import {useRecoilValue} from 'recoil';
-import {connectedSocket, user, User} from './store/atoms';
+import React, {useState, useEffect} from 'react';
+import DrawingBoard from './components/DrawingBoard';
 import {LocalUser} from './types';
+import {useSetRecoilState} from 'recoil';
+import {user, connectedSocket} from './store/atoms';
+import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 
 
-interface BoardProps {
-  localUser : LocalUser
-}
-
-interface Point {
-  x : number,
-  y : number,
-  isConnected: boolean
-}
-const sendMessage = (socket: WebSocket, user : User, messageBody : object) => {
-  socket.send(JSON.stringify({
-    ...messageBody,
-    ...user,
-    authToken: user.token,
-  }));
-};
-const Board = ({localUser} : BoardProps) => {
-  const socket = useRecoilValue(connectedSocket);
-  const localUserInfo = useRecoilValue(user);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isDrawingRef = useRef<boolean>(false);
-  const points = useRef<Array<Point>>([]);
-  const localProgress = useRef<number>(0);
-  const draw = () => {
-    const context = canvasRef.current?.getContext('2d');
-    if (context && points.current) {
-      for (let progress = localProgress.current; progress < points.current.length; progress++) {
-        context.lineWidth = localUser.thickness;
-        context.strokeStyle = localUser.color;
-        context.beginPath();
-        context.lineJoin = 'round';
-        context.lineCap = 'round';
-        if (points.current[progress].isConnected) {
-          context.moveTo(localUser.lastX, localUser.lastY);
-        } else {
-          context.moveTo(points.current[progress].x - 1, points.current[progress].y -1);
-        }
-        context.lineTo(points.current[progress].x, points.current[progress].y);
-        context.stroke();
-        localUser.lastX = points.current[progress].x;
-        localUser.lastY = points.current[progress].y;
-        localProgress.current = progress;
-      }
-    }
-  };
-
-  const handleMouseMove = (event : MouseEvent) => {
-    const coordinate = {
-      x: (event.clientX - (canvasRef.current?.offsetLeft || 0)),
-      y: (event.clientY - (canvasRef.current?.offsetTop || 0)),
-      isConnected: isDrawingRef.current,
-    };
-    if (isDrawingRef.current) {
-      points.current = [...points.current, coordinate];
-      draw();
-      if (socket && localUserInfo) {
-        sendMessage(socket, localUserInfo, {
-          payload: coordinate,
-          type: 'drawing',
-        });
-      }
-    }
-  };
-
-  const handleMouseDown = (event : MouseEvent) => {
-    const coordinate = {
-      x: (event.clientX - (canvasRef.current?.offsetLeft || 0)),
-      y: (event.clientY - (canvasRef.current?.offsetTop || 0)),
-      isConnected: false,
-    };
-    points.current = [...points.current, coordinate];
-    draw();
-    isDrawingRef.current = true;
-  };
-  const handleMouseUp = (event : MouseEvent) => {
-    points.current = [];
-    localProgress.current = 0;
-    isDrawingRef.current = false;
-  };
-  const handleMouseLeave = (event : MouseEvent) => {
-    isDrawingRef.current = false;
-  };
-
+const Board = () => {
+  const [localUser, setLocalUser] = useState<LocalUser>();
+  const setSocket = useSetRecoilState(connectedSocket);
+  const setUser = useSetRecoilState(user);
   useEffect(() => {
-    if (canvasRef && canvasRef.current) {
-      canvasRef.current.addEventListener('mousemove', handleMouseMove, false);
-      canvasRef.current.addEventListener('mousedown', handleMouseDown, false);
-      canvasRef.current.addEventListener('mouseup', handleMouseUp, false);
-      canvasRef.current.addEventListener('mouseleave', handleMouseLeave, false);
-    }
+    const ws = new WebSocket('ws://localhost:8000?key=528fad72-6335-413a-bc49-0674f3801a99');
+    ws.addEventListener('open', () => {
+      console.log('connection established');
+      ws.send(JSON.stringify({type: 'authenticate', payload: null}));
+    });
 
-    return () => {
-      canvasRef.current?.removeEventListener('mousedown', handleMouseDown);
-      canvasRef.current?.removeEventListener('mousemove', handleMouseMove);
-      canvasRef.current?.removeEventListener('mouseleave', handleMouseLeave);
-      canvasRef.current?.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [canvasRef]);
 
+    ws.addEventListener('message', (message) => {
+      const {payload} = JSON.parse(message.data);
+
+      setUser({
+        id: payload._id,
+        username: payload.username,
+        token: payload.token,
+        email: '',
+        isLoggedIn: true,
+        guest: false,
+      });
+      setLocalUser({
+        _id: payload._id,
+        username: payload.username,
+        token: payload.token,
+        lastX: 0,
+        lastY: 0,
+        thickness: 5,
+        color: '#000000',
+      } as LocalUser);
+    });
+    setSocket(() => ws);
+  }, []);
   return (
-    <canvas
-      className="canvas"
-      ref={canvasRef}
-      width="500"
-      height="500">
-
-    </canvas>
+    <Router>
+      <Switch>
+        <Route path="/">
+          {localUser && (
+            <>
+              <h1>{localUser.username}</h1>
+              <DrawingBoard localUser={localUser}/>
+            </>
+          )}
+        </Route>
+      </Switch>
+    </Router>
   );
 };
 

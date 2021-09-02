@@ -7,11 +7,21 @@ export const connectedSocket = atom<WebSocket | null>({
 });
 
 export interface User {
-  id: string,
-  token: string,
-  username: string
+  id: string | null,
+  token: string | null,
+  username: string | null,
+  email: string | null,
+  isLoggedIn: boolean,
+  guest: boolean
 }
 export const user = atom<User | null>({
   key: 'user',
-  default: null,
+  default: {
+    id: null,
+    token: null,
+    username: null,
+    email: null,
+    isLoggedIn: false,
+    guest: false,
+  },
 });

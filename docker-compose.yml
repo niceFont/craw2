@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  ui:
+    network_mode: host
+    container_name: ui
+    image: craw2/ui
+    build:
+      network: host
+      context: ./ui
+    volumes:
+      - ./ui/src:/app/src
+  auth:
+    network_mode: host
+    container_name: auth
+    image: craw2/auth
+    build:
+      network: host
+      context: ./auth
+    volumes:
+      - ./auth/src:/app/src
+      - ./auth/dist:/app/dist
+  publisher:
+    network_mode: host
+    container_name: pub
+    image: craw/pub
+    build:
+      network: host
+      context: ./publisher
+    volumes:
+      - ./publisher/src:/app/src
+      - ./publisher/dist:/publisher/dist

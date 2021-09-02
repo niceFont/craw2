@@ -19,6 +19,7 @@ wss.on('connection', registerEventHandlers);
 
 server.on('upgrade', (req : IncomingMessage, socket : Agent) => {
   console.log('hey');
+  console.log(req.headers.cookie);
   const key = new url.URL('http://www.somehost.com' + req.url || '').searchParams.get('key');
   const {origin} = req.headers;
   if (!origin || !key) {

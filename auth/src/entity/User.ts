@@ -5,7 +5,7 @@ import config from 'config';
 @Entity()
 @Unique(['username'])
 @Unique(['email'])
-export class User {
+export default class User {
     @PrimaryGeneratedColumn()
     id: number;
 

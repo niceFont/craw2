@@ -1,53 +1,54 @@
 /* eslint-disable require-jsdoc */
-import React, {useState, useEffect} from 'react';
+import React from 'react';
+import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 import Board from './Board';
-import {LocalUser} from './types';
+import Login from './Login';
+import Navbar from './components/Navbar';
+import Home from './Home';
+import NotFound from './404';
 import {useSetRecoilState} from 'recoil';
-import './App.css';
-import {user, connectedSocket} from './store/atoms';
-
+import {user} from './store/atoms';
 
 function App() {
-  const [localUser, setLocalUser] = useState<LocalUser>();
-  const setSocket = useSetRecoilState(connectedSocket);
-  const setUser = useSetRecoilState(user);
-  useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000?key=528fad72-6335-413a-bc49-0674f3801a99');
-    ws.addEventListener('open', () => {
-      console.log('connection established');
-      ws.send(JSON.stringify({type: 'authenticate', payload: null}));
-    });
-
-
-    ws.addEventListener('message', (message) => {
-      const {payload} = JSON.parse(message.data);
-
-      setUser({
-        id: payload._id,
-        username: payload.username,
-        token: payload.token,
+  const setSession = useSetRecoilState(user);
+  React.useEffect(() => {
+    const getSession = async (): Promise<void> => {
+      const res = await fetch(process.env.REACT_APP_AUTH_API + '/me', {
+        method: 'GET',
+        credentials: 'include',
+        mode: 'cors',
       });
-      setLocalUser({
-        _id: payload._id,
-        username: payload.username,
-        token: payload.token,
-        lastX: 0,
-        lastY: 0,
-        thickness: 5,
-        color: '#000000',
-      } as LocalUser);
-    });
-    setSocket(() => ws);
+      if (!res.ok) {
+        console.log('DIDNT WORK');
+      } else {
+        const sess = await res.json();
+        setSession({
+          ...sess,
+          isLoggedIn: true,
+        });
+      }
+    };
+
+    getSession();
   }, []);
   return (
-    <div>
-      {localUser && (
-        <>
-          <h1>{localUser.username}</h1>
-          <Board localUser={localUser}/>
-        </>
-      )}
-    </div>
+    <Router>
+      <Navbar></Navbar>
+      <Switch>
+        <Route exact path="/">
+          <Home />
+        </Route>
+        <Route path="/login">
+          <Login></Login>
+        </Route>
+        <Route path="/board/:boardID">
+          <Board></Board>
+        </Route>
+        <Route path="*">
+          <NotFound />
+        </Route>
+      </Switch>
+    </Router>
   );
 }
 
