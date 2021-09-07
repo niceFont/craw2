@@ -6,31 +6,21 @@ import Login from './Login';
 import Navbar from './components/Navbar';
 import Home from './Home';
 import NotFound from './404';
-import {useSetRecoilState} from 'recoil';
-import {user} from './store/atoms';
+import {useRecoilState} from 'recoil';
+import {userAtom} from './store/atoms';
+import Dashboard from './Dashboard';
+import {getSession} from './helpers/user';
 
 function App() {
-  const setSession = useSetRecoilState(user);
-  React.useEffect(() => {
-    const getSession = async (): Promise<void> => {
-      const res = await fetch(process.env.REACT_APP_AUTH_API + '/me', {
-        method: 'GET',
-        credentials: 'include',
-        mode: 'cors',
-      });
-      if (!res.ok) {
-        console.log('DIDNT WORK');
-      } else {
-        const sess = await res.json();
-        setSession({
-          ...sess,
-          isLoggedIn: true,
-        });
-      }
-    };
+  const [storeSession, setSession] = useRecoilState(userAtom);
 
-    getSession();
-  }, []);
+  React.useEffect(() => {
+    if (!storeSession?.isLoggedIn) {
+      getSession().then((session) => {
+        if (session) setSession(session);
+      });
+    }
+  }, [storeSession]);
   return (
     <Router>
       <Navbar></Navbar>
@@ -40,6 +30,9 @@ function App() {
         </Route>
         <Route path="/login">
           <Login></Login>
+        </Route>
+        <Route path="/dashboard">
+          <Dashboard></Dashboard>
         </Route>
         <Route path="/board/:boardID">
           <Board></Board>

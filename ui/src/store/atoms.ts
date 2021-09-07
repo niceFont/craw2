@@ -1,7 +1,7 @@
 import {atom} from 'recoil';
 
 
-export const connectedSocket = atom<WebSocket | null>({
+export const connectedSocketAtom = atom<WebSocket | null>({
   key: 'socket',
   default: null,
 });
@@ -14,7 +14,7 @@ export interface User {
   isLoggedIn: boolean,
   guest: boolean
 }
-export const user = atom<User | null>({
+export const userAtom = atom<User | null>({
   key: 'user',
   default: {
     id: null,
@@ -24,4 +24,10 @@ export const user = atom<User | null>({
     isLoggedIn: false,
     guest: false,
   },
+});
+
+
+export const tokenAtom = atom<string | null>({
+  key: 'token',
+  default: null,
 });

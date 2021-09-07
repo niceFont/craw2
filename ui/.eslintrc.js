@@ -23,5 +23,6 @@ module.exports = {
     'max-len': 'off',
     'require-jsdoc': 'off',
     'no-unused-vars': 'off',
+    'react/prop-types': 'off',
   },
 };

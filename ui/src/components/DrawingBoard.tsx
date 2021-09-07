@@ -1,12 +1,15 @@
 /* eslint-disable max-len */
 import React, {useEffect, useRef} from 'react';
 import {useRecoilValue} from 'recoil';
-import {connectedSocket, user, User} from '../store/atoms';
+import {connectedSocketAtom, userAtom, User} from '../store/atoms';
 import {LocalUser} from '../types';
 
 
 interface BoardProps {
-  localUser : LocalUser
+  settings: {
+    color: string,
+    thickness: number
+  }
 }
 
 interface Point {
@@ -21,31 +24,37 @@ const sendMessage = (socket: WebSocket, user : User, messageBody : object) => {
     authToken: user.token,
   }));
 };
-const Board = ({localUser} : BoardProps) => {
-  const socket = useRecoilValue(connectedSocket);
-  const localUserInfo = useRecoilValue(user);
+
+
+const Board = ({settings} : BoardProps) => {
+  const socket = useRecoilValue(connectedSocketAtom);
+  const localUserInfo = useRecoilValue(userAtom);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawingRef = useRef<boolean>(false);
   const points = useRef<Array<Point>>([]);
   const localProgress = useRef<number>(0);
+  const lastPosition = useRef<{ lastX: number, lastY: number}>({
+    lastX: 0,
+    lastY: 0,
+  });
   const draw = () => {
     const context = canvasRef.current?.getContext('2d');
     if (context && points.current) {
       for (let progress = localProgress.current; progress < points.current.length; progress++) {
-        context.lineWidth = localUser.thickness;
-        context.strokeStyle = localUser.color;
+        context.lineWidth = settings.thickness;
+        context.strokeStyle = settings.color;
         context.beginPath();
         context.lineJoin = 'round';
         context.lineCap = 'round';
         if (points.current[progress].isConnected) {
-          context.moveTo(localUser.lastX, localUser.lastY);
+          context.moveTo(lastPosition.current.lastX, lastPosition.current.lastY);
         } else {
           context.moveTo(points.current[progress].x - 1, points.current[progress].y -1);
         }
         context.lineTo(points.current[progress].x, points.current[progress].y);
         context.stroke();
-        localUser.lastX = points.current[progress].x;
-        localUser.lastY = points.current[progress].y;
+        lastPosition.current.lastX = points.current[progress].x;
+        lastPosition.current.lastY = points.current[progress].y;
         localProgress.current = progress;
       }
     }

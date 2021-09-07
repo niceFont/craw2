@@ -1,15 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import DrawingBoard from './components/DrawingBoard';
-import {LocalUser} from './types';
-import {useSetRecoilState} from 'recoil';
-import {user, connectedSocket} from './store/atoms';
-import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+import {useSetRecoilState, useRecoilValue} from 'recoil';
+import {userAtom, connectedSocketAtom, tokenAtom} from './store/atoms';
 
 
 const Board = () => {
-  const [localUser, setLocalUser] = useState<LocalUser>();
-  const setSocket = useSetRecoilState(connectedSocket);
-  const setUser = useSetRecoilState(user);
+  const setSocket = useSetRecoilState(connectedSocketAtom);
+  const user = useRecoilValue(userAtom);
+  const setToken = useSetRecoilState(tokenAtom);
   useEffect(() => {
     const ws = new WebSocket('ws://localhost:8000?key=528fad72-6335-413a-bc49-0674f3801a99');
     ws.addEventListener('open', () => {
@@ -21,39 +19,15 @@ const Board = () => {
     ws.addEventListener('message', (message) => {
       const {payload} = JSON.parse(message.data);
 
-      setUser({
-        id: payload._id,
-        username: payload.username,
-        token: payload.token,
-        email: '',
-        isLoggedIn: true,
-        guest: false,
-      });
-      setLocalUser({
-        _id: payload._id,
-        username: payload.username,
-        token: payload.token,
-        lastX: 0,
-        lastY: 0,
-        thickness: 5,
-        color: '#000000',
-      } as LocalUser);
+      setToken(payload.token);
     });
     setSocket(() => ws);
   }, []);
   return (
-    <Router>
-      <Switch>
-        <Route path="/">
-          {localUser && (
-            <>
-              <h1>{localUser.username}</h1>
-              <DrawingBoard localUser={localUser}/>
-            </>
-          )}
-        </Route>
-      </Switch>
-    </Router>
+    <>
+      <h1>{user?.username}</h1>
+      <DrawingBoard settings={{color: '#000000', thickness: 5}} />
+    </>
   );
 };
 

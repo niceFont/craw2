@@ -5,6 +5,9 @@ import clsx from 'clsx';
 import {useHistory, useLocation} from 'react-router-dom';
 import errorMapper from './helpers/errorMapper';
 import Alert, {AlertTypes} from './components/Alert';
+import {useSetRecoilState} from 'recoil';
+import {getSession} from './helpers/user';
+import {userAtom} from './store/atoms';
 
 interface LocationState {
   from: {
@@ -16,6 +19,7 @@ const Login = () => {
   const history = useHistory();
   const location = useLocation<LocationState>();
   const [error, setError] = useState<string>();
+  const setSession = useSetRecoilState(userAtom);
   const formik = useFormik({
     initialValues: {
       username: '',
@@ -38,8 +42,9 @@ const Login = () => {
         const err = (await response.json())?.message;
         setError(errorMapper(err));
       } else {
+        const session = await getSession();
+        setSession(session);
         const {from} = location.state || {from: {pathname: '/'}};
-
         history.push(from);
       }
     },
@@ -88,6 +93,7 @@ const Login = () => {
               type="checkbox"
               name="remember"
               id="remember"
+              onChange={formik.handleChange}
               className="inline-block align-middle"
             />
             <label

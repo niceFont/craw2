@@ -1,10 +1,12 @@
 import React from 'react';
-
+import MainContainer from './components/MainContainer';
 
 const Home = () => {
-  return <div className="bg-white rounded-md h-80 p-12 w-2/3 ml-auto mr-auto">
-    <h1>Homepage</h1>
-  </div>;
+  return (
+    <MainContainer>
+      <h1>Homepage</h1>
+    </MainContainer>
+  );
 };
 
 export default Home;

@@ -20,7 +20,7 @@ const redisClient = redis.createClient(config.get('redis.options'));
 const app = express();
 
 const sess : session.SessionOptions = {
-  store: new RedisStore({client: redisClient}),
+  store: new RedisStore({client: redisClient, ttl: 604800, disableTouch: true}),
   saveUninitialized: true,
   secret: config.get('session.secret'),
   resave: false,
@@ -37,6 +37,7 @@ const SecureRouteHandler = (req : express.Request, res : express.Response, next 
 };
 
 const redisGet = promisify(redisClient.get).bind(redisClient);
+const redisExpire = promisify(redisClient.expire).bind(redisClient);
 
 app.use(cors({
   credentials: true,
@@ -81,6 +82,13 @@ app.post('/login', async (req, res) => {
   req.session.key = {email: user.email, username: user.username, id: user.id, guest: false};
   req.cookies.sid = req.sessionID;
 
+  if (!req.body.remember) {
+    console.log('HERe', req.body);
+    await redisExpire(`sess:${req.sessionID}`, 86400);
+  } else {
+    req.session.save((err) => console.log(err));
+  }
+
   res.status(204).send();
 });
 
@@ -117,10 +125,11 @@ app.post('/signup', async (req : express.Request, res : express.Response) => {
   }
 });
 
-app.post('/guest', (req : express.Request, res : express.Response) => {
+app.post('/guest', async (req : express.Request, res : express.Response) => {
   // @ts-ignore
   req.session.key = {id: uuid(), guest: true};
 
+  await redisExpire(`sess:${req.sessionID}`, 86400);
   res.status(204).send();
 });
 
@@ -136,11 +145,12 @@ app.post('/logout', async (req : express.Request, res : express.Response) => {
 });
 
 app.get('/me', async (req : express.Request, res : express.Response) => {
-  const session = JSON.parse(await redisGet(`sess:${req.sessionID}`) || '');
+  const session = JSON.parse(await redisGet(`sess:${req.sessionID}`) || '{}');
 
   if (!session) {
     res.status(403).json({message: 'UNAUTHORIZED'});
   } else {
+    console.log(req.sessionID);
     if (session.key) {
       res.json({
         id: session.key.id,
