@@ -1,6 +1,15 @@
 version: "3.8"
 
 services:
+  api:
+    network_mode: host
+    container_name: api
+    image: craw2/api
+    build:
+      network: host
+      context: ./api
+    volumes:
+      - ./api:/app/src
   ui:
     network_mode: host
     container_name: ui
