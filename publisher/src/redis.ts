@@ -4,6 +4,7 @@ import {promisify} from 'util';
 
 
 function redisFactory(options : redis.ClientOpts) {
+  console.log("test")
   const client = redis.createClient(options);
 
   return {
